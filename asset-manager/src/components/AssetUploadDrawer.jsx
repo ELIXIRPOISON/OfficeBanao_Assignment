@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { 
   Drawer, 
   Box, 
@@ -8,29 +8,24 @@ import {
   Stack, 
   Typography,
   Divider,
-  Dialog,
-  DialogActions,
-  DialogContent
 } from '@mui/material';
 import { 
   Close, 
   Rotate90DegreesCw, 
   Flip, 
   Crop, 
-  SwapHoriz,
+  SwapVert,
   CloudUpload,
   Check,
-  Clear,
   KeyboardArrowDown,
-  Edit,
-  Done
+  Edit
 } from '@mui/icons-material';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
-const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
+const AssetUploadDrawer = ({ open, onClose, onSave, asset, initialImage }) => {
   const [description, setDescription] = useState(asset?.description || '');
-  const [image, setImage] = useState(asset?.image || null);
+  const [image, setImage] = useState(asset?.image || initialImage || null);
   const [crop, setCrop] = useState();
   const [completedCrop, setCompletedCrop] = useState(null);
   const [rotation, setRotation] = useState(0);
@@ -40,6 +35,13 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
   const [showEditTools, setShowEditTools] = useState(false);
   const imgRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (initialImage) {
+      setImage(initialImage);
+      setDescription('');
+    }
+  }, [initialImage]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -178,7 +180,7 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
                   p: 4,
                   textAlign: 'center',
                   cursor: 'pointer',
-                  backgroundColor: 'background.paper',
+                  backgroundColor: 'background.default',
                   height: '60vh',
                   display: 'flex',
                   flexDirection: 'column',
@@ -252,7 +254,7 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
                       sx={{
                         backgroundColor: 'action.hover',
                         '&:hover': {
-                          backgroundColor: 'background.paper'
+                          backgroundColor: 'background.default'
                         }
                       }}
                     >
@@ -269,7 +271,7 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
                           sx={{
                             backgroundColor: 'action.hover',
                             '&:hover': {
-                              backgroundColor: 'background.paper'
+                              backgroundColor: 'background.default'
                             }
                           }}
                         >
@@ -283,7 +285,7 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
                           sx={{
                             backgroundColor: 'action.hover',
                             '&:hover': {
-                              backgroundColor: 'background.paper'
+                              backgroundColor: 'background.default'
                             }
                           }}
                         >
@@ -297,11 +299,11 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
                           sx={{
                             backgroundColor: 'action.hover',
                             '&:hover': {
-                              backgroundColor: 'background.paper'
+                              backgroundColor: 'background.default'
                             }
                           }}
                         >
-                          <SwapHoriz fontSize="small" />
+                          <SwapVert fontSize="small" />
                         </IconButton>
                         <IconButton
                           onClick={() => {
@@ -314,7 +316,7 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
                           sx={{
                             backgroundColor: 'action.hover',
                             '&:hover': {
-                              backgroundColor: 'background.paper'
+                              backgroundColor: 'background.default'
                             }
                           }}
                         >
@@ -328,7 +330,7 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
                           sx={{
                             backgroundColor: 'action.hover',
                             '&:hover': {
-                              backgroundColor: 'background.paper'
+                              backgroundColor: 'background.default'
                             }
                           }}
                         >

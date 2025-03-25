@@ -1,6 +1,6 @@
-import Masonry from 'react-masonry-css'
-import { Box, Card, CardContent, CardMedia, IconButton, Typography } from '@mui/material'
-import { Edit } from '@mui/icons-material'
+import Masonry from 'react-masonry-css';
+import { Box, Card, CardContent, CardMedia, IconButton, Typography } from '@mui/material';
+import { Edit } from '@mui/icons-material';
 
 const AssetGallery = ({ assets, onEdit }) => {
   const breakpointColumnsObj = {
@@ -8,7 +8,7 @@ const AssetGallery = ({ assets, onEdit }) => {
     1100: 3,
     700: 2,
     500: 1
-  }
+  };
 
   return (
     <Masonry
@@ -41,7 +41,7 @@ const AssetGallery = ({ assets, onEdit }) => {
         </Card>
       ))}
     </Masonry>
-  )
-}
+  );
+};
 
-export default AssetGallery
+export default AssetGallery;
