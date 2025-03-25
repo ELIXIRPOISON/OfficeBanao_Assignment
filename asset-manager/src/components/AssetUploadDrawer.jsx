@@ -7,7 +7,10 @@ import {
   IconButton, 
   Stack, 
   Typography,
-  Divider
+  Divider,
+  Dialog,
+  DialogActions,
+  DialogContent
 } from '@mui/material';
 import { 
   Close, 
@@ -15,7 +18,12 @@ import {
   Flip, 
   Crop, 
   SwapHoriz,
-  CloudUpload
+  CloudUpload,
+  Check,
+  Clear,
+  KeyboardArrowDown,
+  Edit,
+  Done
 } from '@mui/icons-material';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -29,6 +37,7 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
   const [flipHorizontal, setFlipHorizontal] = useState(false);
   const [flipVertical, setFlipVertical] = useState(false);
   const [disabled, setDisabled] = useState(true);
+  const [showEditTools, setShowEditTools] = useState(false);
   const imgRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -36,14 +45,22 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = () => setImage(reader.result);
+      reader.onload = () => {
+        setImage(reader.result);
+        setCrop(undefined);
+        setCompletedCrop(null);
+        setRotation(0);
+        setFlipHorizontal(false);
+        setFlipVertical(false);
+        setDisabled(true);
+      };
       reader.readAsDataURL(file);
     }
   };
 
   const generateCroppedImage = useCallback(async () => {
     if (!completedCrop || !imgRef.current) {
-      return image; // Return original if no crop
+      return image;
     }
 
     const imageElement = imgRef.current;
@@ -61,7 +78,6 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
     canvas.height = pixelCrop.height;
     const ctx = canvas.getContext('2d');
 
-    // Apply transformations
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate((rotation * Math.PI) / 180);
@@ -107,7 +123,6 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
 
   const handleStartCropping = async () => {
     if (!disabled) {
-      // When finishing cropping
       const croppedImage = await generateCroppedImage();
       if (croppedImage) {
         setImage(croppedImage);
@@ -116,6 +131,11 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
       }
     }
     setDisabled(!disabled);
+    setShowEditTools(false);
+  };
+
+  const toggleEditTools = () => {
+    setShowEditTools(!showEditTools);
   };
 
   return (
@@ -123,10 +143,9 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
       anchor="right" 
       open={open} 
       onClose={onClose}
-      PaperProps={{ sx: { width: { xs: '100%', sm: 450 } } }}
+      PaperProps={{ sx: { width: '100%' } }}
     >
-      <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-        {/* Hidden file input */}
+      <Box sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <input
           type="file"
           ref={fileInputRef}
@@ -135,138 +154,244 @@ const AssetUploadDrawer = ({ open, onClose, onSave, asset }) => {
           style={{ display: 'none' }}
         />
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">
-            {asset ? 'Edit Asset' : 'Add New Asset'}
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6" fontWeight="bold">
+            {asset ? 'Edit Asset' : 'Add Asset'}
           </Typography>
           <IconButton onClick={onClose}>
             <Close />
           </IconButton>
         </Stack>
 
-        <Divider sx={{ mb: 3 }} />
+        <Divider />
 
-        {!image ? (
-          <Box
-            onClick={handleReplaceImage}
-            sx={{
-              border: '2px dashed',
-              borderColor: 'divider',
-              borderRadius: 2,
-              p: 4,
-              textAlign: 'center',
-              cursor: 'pointer',
-              backgroundColor: 'background.paper',
-              flexGrow: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-          >
-            <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-            <Typography variant="body1" color="text.secondary">
-              Click to select an image
-            </Typography>
-            <Typography variant="body2" color="text.disabled" mt={1}>
-              Supports: JPEG, PNG, WEBP
-            </Typography>
-          </Box>
-        ) : (
-          <>
-            <Box sx={{ 
-              mb: 3, 
-              position: 'relative', 
-              overflow: 'hidden', 
-              borderRadius: 2,
-              border: '1px solid',
-              borderColor: 'divider'
-            }}>
-              <ReactCrop
-                crop={crop}
-                onChange={c => setCrop(c)}
-                onComplete={c => setCompletedCrop(c)}
-                aspect={1}
-                disabled={disabled}
-                style={{ maxHeight: '400px' }}
-              >
-                <img
-                  ref={imgRef}
-                  src={image}
-                  alt="Preview"
-                  style={{
-                    transform: `rotate(${rotation}deg) scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`,
-                    maxWidth: '100%',
-                    maxHeight: '400px',
-                    display: 'block'
-                  }}
-                  onLoad={() => {
-                    setCrop(undefined);
-                    setCompletedCrop(null);
-                  }}
-                />
-              </ReactCrop>
-            </Box>
-
-            <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
-              <IconButton 
-                onClick={handleRotate}
-                color="primary"
-                title="Rotate 90°"
-              >
-                <Rotate90DegreesCw />
-              </IconButton>
-              <IconButton 
-                onClick={() => setFlipHorizontal((prev) => !prev)}
-                color={flipHorizontal ? 'primary' : 'default'}
-                title="Flip horizontal"
-              >
-                <Flip />
-              </IconButton>
-              <IconButton 
-                onClick={() => setFlipVertical((prev) => !prev)}
-                color={flipVertical ? 'primary' : 'default'}
-                title="Flip vertical"
-              >
-                <SwapHoriz />
-              </IconButton>
-              <IconButton
-                onClick={handleStartCropping}
-                color={!disabled ? 'primary' : 'default'}
-                title={disabled ? 'Start Cropping' : 'Apply Crop'}
-              >
-                <Crop />
-              </IconButton>
-              <Button
-                variant="outlined"
+        <Box sx={{ display: 'flex', gap: 4, flexGrow: 1 }}>
+          {/* Image Area (70% width) */}
+          <Box sx={{ flex: 1, position: 'relative', maxWidth: '70%' }}>
+            {!image ? (
+              <Box
                 onClick={handleReplaceImage}
-                sx={{ ml: 'auto' }}
+                sx={{
+                  border: '2px dashed',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  p: 4,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  backgroundColor: 'background.paper',
+                  height: '60vh',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
               >
-                Replace Image
-              </Button>
-            </Stack>
-          </>
-        )}
+                <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="body1" color="text.secondary">
+                  Click to select an image
+                </Typography>
+                <Typography variant="body2" color="text.disabled" mt={1}>
+                  Supports: JPEG, PNG, WEBP
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ position: 'relative', height: '60vh' }}>
+                <ReactCrop
+                  crop={crop}
+                  onChange={c => setCrop(c)}
+                  onComplete={c => setCompletedCrop(c)}
+                  disabled={disabled}
+                  style={{ maxHeight: '100%' }}
+                >
+                  <img
+                    ref={imgRef}
+                    src={image}
+                    alt="Preview"
+                    style={{
+                      transform: `rotate(${rotation}deg) scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`,
+                      maxHeight: '60vh',
+                      display: 'block'
+                    }}
+                    onLoad={() => {
+                      setCrop(undefined);
+                      setCompletedCrop(null);
+                    }}
+                  />
+                </ReactCrop>
 
-        <TextField
-          label="Asset Description"
-          fullWidth
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          sx={{ mb: 3 }}
-          placeholder="Enter a description for this asset"
-        />
+                {!disabled ? (
+                  <Button
+                    variant="contained"
+                    onClick={handleStartCropping}
+                    sx={{
+                      position: 'absolute',
+                      top: 16,
+                      right: 16,
+                      zIndex: 1
+                    }}
+                    startIcon={<Check />}
+                  >
+                    Apply Crop
+                  </Button>
+                ) : (
+                  <Box sx={{
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    zIndex: 1,
+                    backgroundColor: 'transparent',
+                    borderRadius: 1,
+                    boxShadow: 1,
+                    p: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1
+                  }}>
+                    <IconButton
+                      onClick={toggleEditTools}
+                      sx={{
+                        backgroundColor: 'action.hover',
+                        '&:hover': {
+                          backgroundColor: 'background.paper'
+                        }
+                      }}
+                    >
+                      {showEditTools ? <Close /> : <Edit />}
+                    </IconButton>
 
-        <Button
-          variant="contained"
-          fullWidth
-          size="large"
-          onClick={handleSave}
-          disabled={!image}
-          sx={{ mt: 'auto' }}
-        >
-          {asset ? 'Update Asset' : 'Save Asset'}
-        </Button>
+                    {showEditTools && (
+                      <>
+                        <IconButton 
+                          onClick={handleRotate}
+                          color="primary"
+                          title="Rotate 90°"
+                          size="small"
+                          sx={{
+                            backgroundColor: 'action.hover',
+                            '&:hover': {
+                              backgroundColor: 'background.paper'
+                            }
+                          }}
+                        >
+                          <Rotate90DegreesCw fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          onClick={() => setFlipHorizontal((prev) => !prev)}
+                          color={flipHorizontal ? 'primary' : 'default'}
+                          title="Flip horizontal"
+                          size="small"
+                          sx={{
+                            backgroundColor: 'action.hover',
+                            '&:hover': {
+                              backgroundColor: 'background.paper'
+                            }
+                          }}
+                        >
+                          <Flip fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          onClick={() => setFlipVertical((prev) => !prev)}
+                          color={flipVertical ? 'primary' : 'default'}
+                          title="Flip vertical"
+                          size="small"
+                          sx={{
+                            backgroundColor: 'action.hover',
+                            '&:hover': {
+                              backgroundColor: 'background.paper'
+                            }
+                          }}
+                        >
+                          <SwapHoriz fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => {
+                            setDisabled(false);
+                            setShowEditTools(false);
+                          }}
+                          color={crop ? 'primary' : 'default'}
+                          title="Crop Image"
+                          size="small"
+                          sx={{
+                            backgroundColor: 'action.hover',
+                            '&:hover': {
+                              backgroundColor: 'background.paper'
+                            }
+                          }}
+                        >
+                          <Crop fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          onClick={handleReplaceImage}
+                          color="default"
+                          title="Replace Image"
+                          size="small"
+                          sx={{
+                            backgroundColor: 'action.hover',
+                            '&:hover': {
+                              backgroundColor: 'background.paper'
+                            }
+                          }}
+                        >
+                          <CloudUpload fontSize="small" />
+                        </IconButton>
+                      </>
+                    )}
+                  </Box>
+                )}
+              </Box>
+            )}
+          </Box>
+
+          {/* Form Area (30% width) */}
+          <Box sx={{ width: 300, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <TextField
+              fullWidth
+              value={description}
+              placeholder='Enter Description'
+              onChange={(e) => setDescription(e.target.value)}
+              multiline
+              rows={8}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  height: '200px',
+                  alignItems: 'flex-start'
+                }
+              }}
+            />
+            
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {['Space', 'Style', 'Package', 'Elements'].map((category) => (
+                <Button
+                  key={category}
+                  variant="outlined"
+                  size="small"
+                  endIcon={<KeyboardArrowDown />}
+                  sx={{
+                    textTransform: 'none',
+                    fontSize: '0.75rem',
+                    px: 1.5,
+                    py: 0.5,
+                    backgroundColor: 'action.hover',
+                    borderColor: 'divider'
+                  }}
+                >
+                  {category}
+                </Button>
+              ))}
+            </Box>
+          </Box>
+        </Box>
+
+        <Box sx={{ alignSelf: 'flex-end' }}>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={!image}
+            sx={{ width: 200 }}
+          >
+            {asset ? 'Update Asset' : 'Upload Image'}
+          </Button>
+        </Box>
       </Box>
     </Drawer>
   );
